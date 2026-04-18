@@ -2,137 +2,182 @@ import base64
 from pathlib import Path
 from typing import Mapping
 
-
-TURBINE_MESSAGES = [
-	"Turbine 1 selected: preparing the first energy stream.",
-	"Turbine 2 selected: balancing airflow and rotation speed.",
-	"Turbine 3 selected: the system is generating momentum.",
-	"Turbine 4 selected: converting wind into steady output.",
-	"Turbine 5 selected: output stable and ready for reporting.",
-]
-
-TURBINE_NAMES = [f"Turbine {index}" for index in range(1, 6)]
-
-
 def load_page_html(template_name: str = "index.html") -> str:
-	"""Load the raw HTML content from the app directory."""
-	template_path = Path(__file__).resolve().parent / template_name
-	return template_path.read_text(encoding="utf-8")
-
+    """Load the raw HTML content from the app directory."""
+    template_path = Path(__file__).resolve().parent / template_name
+    return template_path.read_text(encoding="utf-8")
 
 def load_turbine_image_data_uri(image_name: str = "turbine.png") -> str:
-	"""Load a local turbine image and return it as a data URI."""
-	image_path = Path(__file__).resolve().parent / "img" / image_name
-	image_bytes = image_path.read_bytes()
-	encoded = base64.b64encode(image_bytes).decode("ascii")
-	return f"data:image/png;base64,{encoded}"
-
+    """Load a local turbine image and return it as a data URI."""
+    image_path = Path(__file__).resolve().parent / "img" / image_name
+    if not image_path.exists():
+        return ""
+    image_bytes = image_path.read_bytes()
+    encoded = base64.b64encode(image_bytes).decode("ascii")
+    return f"data:image/png;base64,{encoded}"
 
 def build_interaction_script() -> str:
-	"""Build the client-side behavior for the turbine tiles."""
-	return f"""
+    """Build the client-side behavior for the application."""
+    return """
 <script>
-	const messageBox = document.getElementById("messageBox");
-	const statusOutput = document.getElementById("statusOutput");
-	const sendStatesButton = document.getElementById("sendStatesButton");
-	const turbineCards = document.querySelectorAll(".turbine-card");
-	const turbineSliders = document.querySelectorAll(".turbine-slider");
+    const totalFlowInput = document.getElementById("totalFlowInput");
+    const upstreamElevationInput = document.getElementById("upstreamElevationInput");
+    const algorithmSelect = document.getElementById("algorithmSelect");
+    const launchAlgorithmButton = document.getElementById("launchAlgorithmButton");
+    
+    const statusOutput = document.getElementById("statusOutput");
+    const totalPowerOut = document.getElementById("totalPowerOut");
+    
+    const showGraphButton = document.getElementById("showGraphButton");
+    const graphsWrapper = document.getElementById("graphsWrapper");
+    
+    let charts = {};
 
-	function getTurbineStates() {{
-		const states = {{}};
+    function getTurbineConstraints() {
+        const turbineCards = document.querySelectorAll(".turbine-card");
+        const constraints = [];
+        
+        turbineCards.forEach(card => {
+            const name = card.dataset.name;
+            const maxFlow = card.querySelector(".turbine-max-flow").value;
+            const available = card.querySelector(".turbine-available").checked;
+            
+            constraints.push({
+                name: name,
+                max_flow: Number(maxFlow),
+                available: available
+            });
+        });
+        
+        return constraints;
+    }
 
-		turbineSliders.forEach((slider) => {{
-			states[slider.dataset.name] = Number(slider.value);
-		}});
+    launchAlgorithmButton.addEventListener("click", async () => {
+        launchAlgorithmButton.disabled = true;
+        launchAlgorithmButton.textContent = "Calcul en cours...";
+        statusOutput.textContent = "Lancement de l'optimisation...";
+        
+        try {
+            const payload = {
+                total_flow: Number(totalFlowInput.value),
+                upstream_elevation: Number(upstreamElevationInput.value),
+                algorithm: algorithmSelect.value,
+                turbines: getTurbineConstraints()
+            };
+            
+            const response = await fetch("/api/optimize", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === "success") {
+                statusOutput.textContent = data.message;
+                totalPowerOut.textContent = `${data.total_power} MW`;
+                
+                // Update turbine cards
+                data.results.forEach(res => {
+                    const card = document.querySelector(`.turbine-card[data-name="${res.name}"]`);
+                    if (card) {
+                        card.querySelector(".turbine-flow-out").textContent = res.flow;
+                        card.querySelector(".turbine-head-out").textContent = res.head;
+                        card.querySelector(".turbine-power-out").textContent = res.power;
+                    }
+                });
+            } else {
+                statusOutput.textContent = "Erreur: " + (data.message || "Unknown error");
+            }
+        } catch (error) {
+            statusOutput.textContent = `Erreur de requête: ${error.message}`;
+        } finally {
+            launchAlgorithmButton.disabled = false;
+            launchAlgorithmButton.textContent = "Lancer l'algorithme";
+        }
+    });
 
-		return states;
-	}}
+    showGraphButton.addEventListener("click", async () => {
+        showGraphButton.disabled = true;
+        showGraphButton.textContent = "Chargement...";
+        graphsWrapper.classList.remove("hidden");
+        
+        try {
+            const payload = {
+                total_flow: Number(totalFlowInput.value),
+                upstream_elevation: Number(upstreamElevationInput.value),
+                algorithm: algorithmSelect.value,
+                turbines: getTurbineConstraints()
+            };
+            
+            const response = await fetch("/api/iterations", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            
+            if (data.status === "success") {
+                const iterations = data.iterations;
+                
+                // Colors for the charts (tailwind sky, teal, amber, violet, pink)
+                const colors = ['#0ea5e9', '#14b8a6', '#f59e0b', '#8b5cf6', '#ec4899'];
+                
+                // Create or update Chart.js instances
+                for (let i = 1; i <= 5; i++) {
+                    const turbineName = `Turbine ${i}`;
+                    const canvasId = `chartTurbine${i}`;
+                    const ctx = document.getElementById(canvasId).getContext('2d');
+                    const turbineData = data.data[turbineName];
+                    const color = colors[i - 1];
+                    
+                    if (charts[turbineName]) {
+                        charts[turbineName].data.labels = iterations;
+                        charts[turbineName].data.datasets[0].data = turbineData;
+                        charts[turbineName].update();
+                    } else {
+                        charts[turbineName] = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: iterations,
+                                datasets: [{
+                                    label: `Débit ${turbineName} (m³/s)`,
+                                    data: turbineData,
+                                    borderColor: color,
+                                    backgroundColor: color + '20',
+                                    borderWidth: 2,
+                                    fill: true,
+                                    tension: 0.3
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: { legend: { display: true, position: 'top' } },
+                                scales: { 
+                                    x: { title: { display: true, text: 'Itération' } },
+                                    y: { title: { display: true, text: 'Débit (m³/s)' }, min: 0 }
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        } catch (error) {
+            statusOutput.textContent = `Erreur de chargement des graphiques: ${error.message}`;
+        } finally {
+            showGraphButton.disabled = false;
+            showGraphButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="inline"><path fill-rule="evenodd" d="M0 0h1v15h15v1H0V0Zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61 4.15-5.073a.5.5 0 0 1 .704-.07Z"/></svg>
+                            Actualiser les graphiques`;
+        }
+    });
 
-	function refreshCardAppearance(card) {{
-		const slider = card.querySelector(".turbine-slider");
-		const value = Number(slider.value);
-		const stateBadge = card.querySelector(".state-pill");
-		slider.style.background = "#d1d5db";
-
-		stateBadge.textContent = `${{value}}%`;
-
-		if (value > 0) {{
-			stateBadge.className = "state-pill px-2 py-1 text-xs font-semibold text-slate-700";
-			return;
-		}}
-
-		stateBadge.className = "state-pill px-2 py-1 text-xs font-semibold text-slate-700";
-	}}
-
-	turbineSliders.forEach((slider) => {{
-		slider.addEventListener("input", () => {{
-			const card = slider.closest(".turbine-card");
-			refreshCardAppearance(card);
-			messageBox.textContent = `${{slider.dataset.name}} set to ${{slider.value}}%.`;
-		}});
-	}});
-
-	sendStatesButton.addEventListener("click", async () => {{
-		sendStatesButton.disabled = true;
-		sendStatesButton.textContent = "Sending...";
-
-		try {{
-			const response = await fetch("/api/turbines", {{
-				method: "POST",
-				headers: {{
-					"Content-Type": "application/json",
-				}},
-				body: JSON.stringify({{ states: getTurbineStates() }}),
-			}});
-
-			const payload = await response.json();
-			statusOutput.textContent = payload.summary || payload.message || "No response returned.";
-			messageBox.textContent = payload.message || "Turbine states sent.";
-		}} catch (error) {{
-			statusOutput.textContent = `Request failed: ${{error.message}}`;
-			messageBox.textContent = "Could not send turbine states.";
-		}} finally {{
-			sendStatesButton.disabled = false;
-			sendStatesButton.textContent = "Send states";
-		}}
-	}});
-
-		turbineCards.forEach((card) => refreshCardAppearance(card));
-		messageBox.textContent = "Use the sliders (0% to 100%), then click Send states.";
+    // Initialize display with a default message
+    statusOutput.textContent = "Prêt. Paramétrez les contraintes puis lancez l'algorithme.";
 </script>
-""".strip()
-
+"""
 
 def render_page_html(template_name: str = "index.html") -> str:
-	"""Render the page HTML with the interaction script injected."""
-	html = load_page_html(template_name)
-	html = html.replace("{{ TURBINE_IMAGE_SRC }}", load_turbine_image_data_uri())
-	return html.replace("<!-- WEB_APP_SCRIPT -->", build_interaction_script())
-
-
-def format_turbine_states(states: Mapping[str, int | float]) -> list[dict[str, str | int]]:
-	"""Normalize turbine states into a printable structure."""
-	formatted_states: list[dict[str, str | int]] = []
-	for turbine_name in TURBINE_NAMES:
-		raw_value = states.get(turbine_name, 0)
-		try:
-			percentage = int(raw_value)
-		except (TypeError, ValueError):
-			percentage = 0
-		percentage = max(0, min(100, percentage))
-		formatted_states.append(
-			{
-				"name": turbine_name,
-				"percentage": percentage,
-				"state": "active" if percentage > 0 else "inactive",
-				"label": f"{percentage}%",
-			}
-		)
-	return formatted_states
-
-
-def build_turbine_state_message(states: Mapping[str, int | float]) -> str:
-	"""Build a human-readable message for the API response."""
-	formatted_states = format_turbine_states(states)
-	lines = [f"{item['name']}: {item['percentage']}% ({item['state']})" for item in formatted_states]
-	return "\n".join(lines)
+    """Render the page HTML with the interaction script injected."""
+    html = load_page_html(template_name)
+    html = html.replace("{{ TURBINE_IMAGE_SRC }}", load_turbine_image_data_uri())
+    return html.replace("<!-- WEB_APP_SCRIPT -->", build_interaction_script())

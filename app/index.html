@@ -1,165 +1,397 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Turbine Gallery</title>
-	<script src="https://cdn.tailwindcss.com"></script>
-	<style>
-		:root {
-			--panel: rgba(255, 255, 255, 0.92);
-			--ink: #102033;
-			--accent: #0f766e;
-			--accent-2: #2563eb;
-		}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turbine Gallery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --panel: rgba(255, 255, 255, 0.92);
+            --ink: #102033;
+            --accent: #0f766e;
+            --accent-2: #2563eb;
+        }
 
-		body {
-			background:
-				radial-gradient(circle at top left, rgba(37, 99, 235, 0.24), transparent 32%),
-				radial-gradient(circle at top right, rgba(15, 118, 110, 0.18), transparent 26%),
-				linear-gradient(180deg, #eef4ff 0%, #eef8f7 100%);
-			color: var(--ink);
-		}
+        body {
+            background:
+                radial-gradient(circle at top left, rgba(37, 99, 235, 0.24), transparent 32%),
+                radial-gradient(circle at top right, rgba(15, 118, 110, 0.18), transparent 26%),
+                linear-gradient(180deg, #eef4ff 0%, #eef8f7 100%);
+            color: var(--ink);
+        }
 
-		.turbine-card {
-			transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
-		}
+        .turbine-card {
+            transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
+        }
 
-		.turbine-card:hover {
-			transform: translateY(-4px);
-			box-shadow: 0 18px 40px rgba(16, 32, 51, 0.16);
-			border-color: rgba(37, 99, 235, 0.45);
-		}
+        .turbine-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 40px rgba(16, 32, 51, 0.16);
+            border-color: rgba(37, 99, 235, 0.45);
+        }
 
-		.state-pill {
-			min-width: 3.5rem;
-		}
+        .state-pill {
+            min-width: 3.5rem;
+        }
 
-		.status-output {
-			white-space: pre-wrap;
-		}
+        .status-output {
+            white-space: pre-wrap;
+        }
 
-		.send-button:disabled {
-			opacity: 0.65;
-			cursor: not-allowed;
-		}
+        .send-button:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
 
-		.turbine-slider {
-			width: 100%;
-			height: 10px;
-			border-radius: 999px;
-			outline: none;
-			appearance: none;
-			-webkit-appearance: none;
-			background: #d1d5db;
-		}
+        .turbine-slider {
+            width: 100%;
+            height: 10px;
+            border-radius: 999px;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            background: #d1d5db;
+        }
 
-		.turbine-slider::-webkit-slider-thumb {
-			-webkit-appearance: none;
-			appearance: none;
-			width: 18px;
-			height: 18px;
-			border-radius: 999px;
-			background: #0f172a;
-			cursor: pointer;
-			border: 2px solid #ffffff;
-		}
+        .turbine-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            background: #0f172a;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+        }
 
-		.turbine-slider::-moz-range-thumb {
-			width: 18px;
-			height: 18px;
-			border-radius: 999px;
-			background: #0f172a;
-			cursor: pointer;
-			border: 2px solid #ffffff;
-		}
+        .turbine-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            background: #0f172a;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+        }
 
-		.panel-glass {
-			background: var(--panel);
-			backdrop-filter: blur(16px);
-		}
-	</style>
+        .panel-glass {
+            background: var(--panel);
+            backdrop-filter: blur(16px);
+        }
+    </style>
 </head>
-	<body class="min-h-screen">
-	<main class="mx-auto flex min-h-screen w-full max-w-7xl items-center px-4 py-8 sm:px-6 lg:px-8">
-		<section class="grid w-full gap-6 lg:grid-cols-[1fr_3fr]">
-			<div class="panel-glass rounded-3xl border border-white/70 p-5 shadow-[0_20px_70px_rgba(16,32,51,0.14)] sm:p-8">
-				<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-					<div>
-						<p class="text-sm font-semibold uppercase tracking-[0.22em] text-teal-700">Interactive turbine gallery</p>
-					</div>
-				</div>
 
-				<div class="grid gap-2">
-					<div class="turbine-card rounded-2xl border p-2" data-name="Turbine 1">
-						<div class="flex items-center justify-between gap-2">
-							<p class="text-xs font-semibold text-slate-700">Turbine 1</p>
-							<span class="state-pill px-2 py-1 text-xs font-semibold text-slate-700">0%</span>
-						</div>
-						<div class="mt-2">
-							<input class="turbine-slider" type="range" min="0" max="100" value="0" data-name="Turbine 1" aria-label="Turbine 1" />
-						</div>
-					</div>
+<body class="min-h-screen">
+    <main class="mx-auto flex min-h-screen w-full max-w-[90rem] flex-col items-center px-4 py-8 sm:px-6 lg:px-8 gap-8">
+        <header class="w-full">
+            <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Optimisation des Turbines Hydroélectriques</h1>
+            <p class="text-slate-500 mt-2">Paramétrez les contraintes, choisissez l'algorithme, et observez les
+                résultats.</p>
+        </header>
 
-					<div class="turbine-card rounded-2xl border p-2" data-name="Turbine 2">
-						<div class="flex items-center justify-between gap-2">
-							<p class="text-xs font-semibold text-slate-700">Turbine 2</p>
-							<span class="state-pill px-2 py-1 text-xs font-semibold text-slate-700">0%</span>
-						</div>
-						<div class="mt-2">
-							<input class="turbine-slider" type="range" min="0" max="100" value="0" data-name="Turbine 2" aria-label="Turbine 2" />
-						</div>
-					</div>
+        <section class="grid w-full gap-6 lg:grid-cols-4">
+            <aside
+                class="col-span-1 panel-glass rounded-3xl border border-white/70 p-5 shadow-[0_20px_70px_rgba(16,32,51,0.14)] self-start sticky top-8">
+                <p class="text-sm font-bold uppercase tracking-[0.15em] text-teal-700 mb-5">Paramètres Globaux</p>
+                <div class="flex flex-col gap-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Débit total à répartir
+                            (m³/s)</label>
+                        <input id="totalFlowInput" type="number"
+                            class="w-full rounded-xl border border-slate-300 p-3 text-slate-700 shadow-sm focus:border-teal-500 focus:ring-teal-500 focus:outline-none"
+                            value="500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Élévation amont (m)</label>
+                        <input id="upstreamElevationInput" type="number"
+                            class="w-full rounded-xl border border-slate-300 p-3 text-slate-700 shadow-sm focus:border-teal-500 focus:ring-teal-500 focus:outline-none"
+                            value="150">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Algorithme</label>
+                        <select id="algorithmSelect"
+                            class="w-full rounded-xl border border-slate-300 p-3 text-slate-700 shadow-sm focus:border-teal-500 focus:ring-teal-500 focus:outline-none">
+                            <option value="prog_dynamique">Programmation Dynamique</option>
+                        </select>
+                    </div>
+                    <button id="launchAlgorithmButton" type="button"
+                        class="mt-2 w-full rounded-xl bg-teal-600 px-5 py-3.5 text-sm font-bold text-white shadow-md transition hover:bg-teal-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2">Lancer
+                        l'algorithme</button>
+                </div>
 
-					<div class="turbine-card rounded-2xl border p-2" data-name="Turbine 3">
-						<div class="flex items-center justify-between gap-2">
-							<p class="text-xs font-semibold text-slate-700">Turbine 3</p>
-							<span class="state-pill px-2 py-1 text-xs font-semibold text-slate-700">0%</span>
-						</div>
-						<div class="mt-2">
-							<input class="turbine-slider" type="range" min="0" max="100" value="0" data-name="Turbine 3" aria-label="Turbine 3" />
-						</div>
-					</div>
+                <div class="mt-8 rounded-2xl bg-slate-50 p-4 border border-slate-200">
+                    <p class="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 mb-2">État du système</p>
+                    <p id="statusOutput" class="text-sm text-slate-700 leading-relaxed font-mono">En attente de
+                        lancement.</p>
+                </div>
+            </aside>
 
-					<div class="turbine-card rounded-2xl border p-2" data-name="Turbine 4">
-						<div class="flex items-center justify-between gap-2">
-							<p class="text-xs font-semibold text-slate-700">Turbine 4</p>
-							<span class="state-pill px-2 py-1 text-xs font-semibold text-slate-700">0%</span>
-						</div>
-						<div class="mt-2">
-							<input class="turbine-slider" type="range" min="0" max="100" value="0" data-name="Turbine 4" aria-label="Turbine 4" />
-						</div>
-					</div>
+            <div class="col-span-1 lg:col-span-3 flex flex-col gap-6">
+                <div
+                    class="panel-glass rounded-3xl border border-white/70 p-5 sm:p-7 shadow-[0_20px_70px_rgba(16,32,51,0.14)] w-full">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <p class="text-sm font-bold uppercase tracking-[0.15em] text-sky-700">Contraintes et Résultats
+                            Turbines</p>
+                        <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border shadow-sm">
+                            <span class="text-slate-500 text-sm font-bold uppercase">Puissance Totale</span>
+                            <span id="totalPowerOut" class="text-sky-600 font-bold text-xl">0 MW</span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="turbinesContainer">
+                        <!-- Turbine 1 -->
+                        <div class="turbine-card rounded-2xl border border-slate-200 bg-white/60 p-4 hover:bg-white"
+                            data-name="Turbine 1">
+                            <div class="flex items-center justify-between gap-2 mb-4 pb-2 border-b border-slate-100">
+                                <p class="font-bold text-slate-800">Turbine 1</p>
+                                <label class="relative inline-flex items-center cursor-pointer"
+                                    title="Activer/Désactiver">
+                                    <input type="checkbox" class="turbine-available sr-only peer" checked
+                                        data-name="Turbine 1">
+                                    <div
+                                        class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-500">
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Débit
+                                        max (m³/s)</label>
+                                    <input
+                                        class="turbine-max-flow w-full rounded-lg border-slate-300 border bg-slate-50 p-2 text-sm text-slate-700 mt-1.5 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 focus:outline-none"
+                                        type="number" min="0" value="100" data-name="Turbine 1" />
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 text-xs pt-1">
+                                    <div>
+                                        <p class="text-slate-400 mb-1 font-medium">Débit turbiné</p>
+                                        <p class="font-bold text-slate-700 text-sm turbine-flow-out"
+                                            data-name="Turbine 1">-</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-slate-400 mb-1 font-medium">Chute nette</p>
+                                        <p class="font-bold text-slate-700 text-sm turbine-head-out"
+                                            data-name="Turbine 1">-</p>
+                                    </div>
+                                    <div class="col-span-2 pt-1 border-t border-slate-100">
+                                        <p class="text-slate-400 mb-1 font-medium">Puissance produite</p>
+                                        <p class="font-bold text-teal-600 text-base turbine-power-out"
+                                            data-name="Turbine 1">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-					<div class="turbine-card rounded-2xl border p-2" data-name="Turbine 5">
-						<div class="flex items-center justify-between gap-2">
-							<p class="text-xs font-semibold text-slate-700">Turbine 5</p>
-							<span class="state-pill px-2 py-1 text-xs font-semibold text-slate-700">0%</span>
-						</div>
-						<div class="mt-2">
-							<input class="turbine-slider" type="range" min="0" max="100" value="0" data-name="Turbine 5" aria-label="Turbine 5" />
-						</div>
-					</div>
-				</div>
-                <br>
-				<button id="sendStatesButton" type="button" class="send-button rounded-xl bg-teal-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-700">Send states</button>
+                        <!-- Turbine 2 -->
+                        <div class="turbine-card rounded-2xl border border-slate-200 bg-white/60 p-4 hover:bg-white"
+                            data-name="Turbine 2">
+                            <div class="flex items-center justify-between gap-2 mb-4 pb-2 border-b border-slate-100">
+                                <p class="font-bold text-slate-800">Turbine 2</p>
+                                <label class="relative inline-flex items-center cursor-pointer"
+                                    title="Activer/Désactiver">
+                                    <input type="checkbox" class="turbine-available sr-only peer" checked
+                                        data-name="Turbine 2">
+                                    <div
+                                        class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-500">
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Débit
+                                        max (m³/s)</label>
+                                    <input
+                                        class="turbine-max-flow w-full rounded-lg border-slate-300 border bg-slate-50 p-2 text-sm text-slate-700 mt-1.5 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 focus:outline-none"
+                                        type="number" min="0" value="100" data-name="Turbine 2" />
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 text-xs pt-1">
+                                    <div>
+                                        <p class="text-slate-400 mb-1 font-medium">Débit turbiné</p>
+                                        <p class="font-bold text-slate-700 text-sm turbine-flow-out"
+                                            data-name="Turbine 2">-</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-slate-400 mb-1 font-medium">Chute nette</p>
+                                        <p class="font-bold text-slate-700 text-sm turbine-head-out"
+                                            data-name="Turbine 2">-</p>
+                                    </div>
+                                    <div class="col-span-2 pt-1 border-t border-slate-100">
+                                        <p class="text-slate-400 mb-1 font-medium">Puissance produite</p>
+                                        <p class="font-bold text-teal-600 text-base turbine-power-out"
+                                            data-name="Turbine 2">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-			</div>
+                        <!-- Turbine 3 -->
+                        <div class="turbine-card rounded-2xl border border-slate-200 bg-white/60 p-4 hover:bg-white"
+                            data-name="Turbine 3">
+                            <div class="flex items-center justify-between gap-2 mb-4 pb-2 border-b border-slate-100">
+                                <p class="font-bold text-slate-800">Turbine 3</p>
+                                <label class="relative inline-flex items-center cursor-pointer"
+                                    title="Activer/Désactiver">
+                                    <input type="checkbox" class="turbine-available sr-only peer" checked
+                                        data-name="Turbine 3">
+                                    <div
+                                        class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-500">
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Débit
+                                        max (m³/s)</label>
+                                    <input
+                                        class="turbine-max-flow w-full rounded-lg border-slate-300 border bg-slate-50 p-2 text-sm text-slate-700 mt-1.5 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 focus:outline-none"
+                                        type="number" min="0" value="100" data-name="Turbine 3" />
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 text-xs pt-1">
+                                    <div>
+                                        <p class="text-slate-400 mb-1 font-medium">Débit turbiné</p>
+                                        <p class="font-bold text-slate-700 text-sm turbine-flow-out"
+                                            data-name="Turbine 3">-</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-slate-400 mb-1 font-medium">Chute nette</p>
+                                        <p class="font-bold text-slate-700 text-sm turbine-head-out"
+                                            data-name="Turbine 3">-</p>
+                                    </div>
+                                    <div class="col-span-2 pt-1 border-t border-slate-100">
+                                        <p class="text-slate-400 mb-1 font-medium">Puissance produite</p>
+                                        <p class="font-bold text-teal-600 text-base turbine-power-out"
+                                            data-name="Turbine 3">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-			<aside class="panel-glass rounded-3xl border border-white/70 p-5 shadow-[0_20px_70px_rgba(16,32,51,0.14)] sm:p-6">
-				<p class="text-sm font-semibold uppercase tracking-[0.22em] text-sky-700">Status box</p>
-				<div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-					<p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Last action</p>
-					<p id="messageBox" class="mt-3 text-lg font-semibold text-slate-900">Move a slider to set a turbine power from 0% to 100%.</p>
-				</div>
-				<div class="mt-4 rounded-2xl bg-gradient-to-br from-teal-600 to-sky-600 p-5 text-white">
-					<p class="text-sm font-semibold uppercase tracking-[0.2em] text-white/80">API response</p>
-					<p id="statusOutput" class="status-output mt-2 text-sm leading-6 text-white/90">The server response will appear here after you press Send states.</p>
-				</div>
-			</aside>
-		</section>
-	</main>
+                        <!-- Turbine 4 -->
+                        <div class="turbine-card rounded-2xl border border-slate-200 bg-white/60 p-4 hover:bg-white"
+                            data-name="Turbine 4">
+                            <div class="flex items-center justify-between gap-2 mb-4 pb-2 border-b border-slate-100">
+                                <p class="font-bold text-slate-800">Turbine 4</p>
+                                <label class="relative inline-flex items-center cursor-pointer"
+                                    title="Activer/Désactiver">
+                                    <input type="checkbox" class="turbine-available sr-only peer" checked
+                                        data-name="Turbine 4">
+                                    <div
+                                        class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-500">
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Débit
+                                        max (m³/s)</label>
+                                    <input
+                                        class="turbine-max-flow w-full rounded-lg border-slate-300 border bg-slate-50 p-2 text-sm text-slate-700 mt-1.5 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 focus:outline-none"
+                                        type="number" min="0" value="100" data-name="Turbine 4" />
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 text-xs pt-1">
+                                    <div>
+                                        <p class="text-slate-400 mb-1 font-medium">Débit turbiné</p>
+                                        <p class="font-bold text-slate-700 text-sm turbine-flow-out"
+                                            data-name="Turbine 4">-</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-slate-400 mb-1 font-medium">Chute nette</p>
+                                        <p class="font-bold text-slate-700 text-sm turbine-head-out"
+                                            data-name="Turbine 4">-</p>
+                                    </div>
+                                    <div class="col-span-2 pt-1 border-t border-slate-100">
+                                        <p class="text-slate-400 mb-1 font-medium">Puissance produite</p>
+                                        <p class="font-bold text-teal-600 text-base turbine-power-out"
+                                            data-name="Turbine 4">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-	<!-- WEB_APP_SCRIPT -->
+                        <!-- Turbine 5 -->
+                        <div class="turbine-card rounded-2xl border border-slate-200 bg-white/60 p-4 hover:bg-white"
+                            data-name="Turbine 5">
+                            <div class="flex items-center justify-between gap-2 mb-4 pb-2 border-b border-slate-100">
+                                <p class="font-bold text-slate-800">Turbine 5</p>
+                                <label class="relative inline-flex items-center cursor-pointer"
+                                    title="Activer/Désactiver">
+                                    <input type="checkbox" class="turbine-available sr-only peer" checked
+                                        data-name="Turbine 5">
+                                    <div
+                                        class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-500">
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Débit
+                                        max (m³/s)</label>
+                                    <input
+                                        class="turbine-max-flow w-full rounded-lg border-slate-300 border bg-slate-50 p-2 text-sm text-slate-700 mt-1.5 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 focus:outline-none"
+                                        type="number" min="0" value="100" data-name="Turbine 5" />
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 text-xs pt-1">
+                                    <div>
+                                        <p class="text-slate-400 mb-1 font-medium">Débit turbiné</p>
+                                        <p class="font-bold text-slate-700 text-sm turbine-flow-out"
+                                            data-name="Turbine 5">-</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-slate-400 mb-1 font-medium">Chute nette</p>
+                                        <p class="font-bold text-slate-700 text-sm turbine-head-out"
+                                            data-name="Turbine 5">-</p>
+                                    </div>
+                                    <div class="col-span-2 pt-1 border-t border-slate-100">
+                                        <p class="text-slate-400 mb-1 font-medium">Puissance produite</p>
+                                        <p class="font-bold text-teal-600 text-base turbine-power-out"
+                                            data-name="Turbine 5">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Graphs Section -->
+                <div
+                    class="panel-glass rounded-3xl border border-white/70 p-5 sm:p-7 shadow-[0_20px_70px_rgba(16,32,51,0.14)] w-full">
+                    <div
+                        class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 border-b border-slate-200 pb-4">
+                        <div>
+                            <p class="text-sm font-bold uppercase tracking-[0.15em] text-indigo-700">Visualisation</p>
+                            <p class="text-sm text-slate-500 mt-1">Évolution du débit turbiné sur 20 itérations</p>
+                        </div>
+                        <button id="showGraphButton" type="button"
+                            class="rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-indigo-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                viewBox="0 0 16 16">
+                                <path fill-rule="evenodd"
+                                    d="M0 0h1v15h15v1H0V0Zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61 4.15-5.073a.5.5 0 0 1 .704-.07Z" />
+                            </svg>
+                            Afficher les graphiques
+                        </button>
+                    </div>
+
+                    <div id="graphsWrapper" class="hidden">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm"><canvas
+                                    id="chartTurbine1"></canvas></div>
+                            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm"><canvas
+                                    id="chartTurbine2"></canvas></div>
+                            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm"><canvas
+                                    id="chartTurbine3"></canvas></div>
+                            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm"><canvas
+                                    id="chartTurbine4"></canvas></div>
+                            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm"><canvas
+                                    id="chartTurbine5"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- WEB_APP_SCRIPT -->
 </body>
+
 </html>
