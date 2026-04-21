@@ -31,7 +31,7 @@ def build_interaction_script() -> str:
     const showGraphButton = document.getElementById("showGraphButton");
     const graphsWrapper = document.getElementById("graphsWrapper");
     
-    let charts = {};
+    let combinedChart = null;
 
     function getTurbineConstraints() {
         const turbineCards = document.querySelectorAll(".turbine-card");
@@ -120,46 +120,46 @@ def build_interaction_script() -> str:
             if (data.status === "success") {
                 const iterations = data.iterations;
                 
-                // Colors for the charts (tailwind sky, teal, amber, violet, pink)
+                // Distinct colors for each turbine
                 const colors = ['#0ea5e9', '#14b8a6', '#f59e0b', '#8b5cf6', '#ec4899'];
+                const labels = ['Turbine 1', 'Turbine 2', 'Turbine 3', 'Turbine 4', 'Turbine 5'];
                 
-                // Create or update Chart.js instances
-                for (let i = 1; i <= 5; i++) {
-                    const turbineName = `Turbine ${i}`;
-                    const canvasId = `chartTurbine${i}`;
-                    const ctx = document.getElementById(canvasId).getContext('2d');
-                    const turbineData = data.data[turbineName];
-                    const color = colors[i - 1];
-                    
-                    if (charts[turbineName]) {
-                        charts[turbineName].data.labels = iterations;
-                        charts[turbineName].data.datasets[0].data = turbineData;
-                        charts[turbineName].update();
-                    } else {
-                        charts[turbineName] = new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: iterations,
-                                datasets: [{
-                                    label: `Débit ${turbineName} (m³/s)`,
-                                    data: turbineData,
-                                    borderColor: color,
-                                    backgroundColor: color + '20',
-                                    borderWidth: 2,
-                                    fill: true,
-                                    tension: 0.3
-                                }]
+                // Build one dataset per turbine
+                const datasets = labels.map((name, i) => ({
+                    label: `${name} (m³/s)`,
+                    data: data.data[name],
+                    borderColor: colors[i],
+                    backgroundColor: colors[i] + '18',
+                    borderWidth: 2.5,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    fill: false,
+                    tension: 0.35
+                }));
+                
+                const ctx = document.getElementById('chartAllTurbines').getContext('2d');
+                
+                if (combinedChart) {
+                    combinedChart.data.labels = iterations;
+                    combinedChart.data.datasets = datasets;
+                    combinedChart.update();
+                } else {
+                    combinedChart = new Chart(ctx, {
+                        type: 'line',
+                        data: { labels: iterations, datasets: datasets },
+                        options: {
+                            responsive: true,
+                            interaction: { mode: 'index', intersect: false },
+                            plugins: {
+                                legend: { display: true, position: 'top', labels: { usePointStyle: true, padding: 20, font: { size: 13 } } },
+                                tooltip: { mode: 'index', intersect: false }
                             },
-                            options: {
-                                responsive: true,
-                                plugins: { legend: { display: true, position: 'top' } },
-                                scales: { 
-                                    x: { title: { display: true, text: 'Itération' } },
-                                    y: { title: { display: true, text: 'Débit (m³/s)' }, min: 0 }
-                                }
+                            scales: {
+                                x: { title: { display: true, text: 'Itération', font: { size: 13, weight: 'bold' } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                                y: { title: { display: true, text: 'Débit (m³/s)', font: { size: 13, weight: 'bold' } }, min: 0, grid: { color: 'rgba(0,0,0,0.05)' } }
                             }
-                        });
-                    }
+                        }
+                    });
                 }
             }
         } catch (error) {

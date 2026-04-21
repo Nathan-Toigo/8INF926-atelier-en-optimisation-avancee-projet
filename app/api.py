@@ -101,7 +101,7 @@ def get_iterations(payload: OptimizationPayload) -> dict[str, object]:
         
     for qtot_val, niv_val in rows:
         sol = dp_optimizer.optimize(
-            qtot=qtot_val, 
+            qtot=qtot_val,
             niv_amont=niv_val, 
             qmax_by_turbine=qmax_by_turbine
         )
