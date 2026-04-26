@@ -97,77 +97,103 @@ def build_interaction_script() -> str:
         }
     });
 
+    const refreshGraphButton = document.getElementById("refreshGraphButton");
+    const iterCountInput = document.getElementById("iterCountInput");
+
+    async function fetchAndRenderChart(count) {
+        graphsWrapper.classList.remove("hidden");
+        
+        const payload = {
+            total_flow: Number(totalFlowInput.value),
+            upstream_elevation: Number(upstreamElevationInput.value),
+            algorithm: algorithmSelect.value,
+            turbines: getTurbineConstraints(),
+            count: count
+        };
+        
+        const response = await fetch("/api/iterations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        
+        if (data.status === "success") {
+            const iterations = data.iterations;
+            
+            // Distinct colors for each turbine
+            const colors = ['#0ea5e9', '#14b8a6', '#f59e0b', '#8b5cf6', '#ec4899'];
+            const labels = ['Turbine 1', 'Turbine 2', 'Turbine 3', 'Turbine 4', 'Turbine 5'];
+            
+            // Build one dataset per turbine
+            const datasets = labels.map((name, i) => ({
+                label: `${name} (m³/s)`,
+                data: data.data[name],
+                borderColor: colors[i],
+                backgroundColor: colors[i] + '18',
+                borderWidth: 2.5,
+                pointRadius: 3,
+                pointHoverRadius: 6,
+                fill: false,
+                tension: 0.35
+            }));
+            
+            const ctx = document.getElementById('chartAllTurbines').getContext('2d');
+            
+            if (combinedChart) {
+                combinedChart.data.labels = iterations;
+                combinedChart.data.datasets = datasets;
+                combinedChart.update();
+            } else {
+                combinedChart = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels: iterations, datasets: datasets },
+                    options: {
+                        responsive: true,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { display: true, position: 'top', labels: { usePointStyle: true, padding: 20, font: { size: 13 } } },
+                            tooltip: { mode: 'index', intersect: false }
+                        },
+                        scales: {
+                            x: { title: { display: true, text: 'Itération', font: { size: 13, weight: 'bold' } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                            y: { title: { display: true, text: 'Débit (m³/s)', font: { size: 13, weight: 'bold' } }, min: 0, grid: { color: 'rgba(0,0,0,0.05)' } }
+                        }
+                    }
+                });
+            }
+        } else {
+            throw new Error(data.message || "Erreur inconnue");
+        }
+    }
+
     showGraphButton.addEventListener("click", async () => {
         showGraphButton.disabled = true;
         showGraphButton.textContent = "Chargement...";
-        graphsWrapper.classList.remove("hidden");
         
         try {
-            const payload = {
-                total_flow: Number(totalFlowInput.value),
-                upstream_elevation: Number(upstreamElevationInput.value),
-                algorithm: algorithmSelect.value,
-                turbines: getTurbineConstraints()
-            };
-            
-            const response = await fetch("/api/iterations", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            const data = await response.json();
-            
-            if (data.status === "success") {
-                const iterations = data.iterations;
-                
-                // Distinct colors for each turbine
-                const colors = ['#0ea5e9', '#14b8a6', '#f59e0b', '#8b5cf6', '#ec4899'];
-                const labels = ['Turbine 1', 'Turbine 2', 'Turbine 3', 'Turbine 4', 'Turbine 5'];
-                
-                // Build one dataset per turbine
-                const datasets = labels.map((name, i) => ({
-                    label: `${name} (m³/s)`,
-                    data: data.data[name],
-                    borderColor: colors[i],
-                    backgroundColor: colors[i] + '18',
-                    borderWidth: 2.5,
-                    pointRadius: 3,
-                    pointHoverRadius: 6,
-                    fill: false,
-                    tension: 0.35
-                }));
-                
-                const ctx = document.getElementById('chartAllTurbines').getContext('2d');
-                
-                if (combinedChart) {
-                    combinedChart.data.labels = iterations;
-                    combinedChart.data.datasets = datasets;
-                    combinedChart.update();
-                } else {
-                    combinedChart = new Chart(ctx, {
-                        type: 'line',
-                        data: { labels: iterations, datasets: datasets },
-                        options: {
-                            responsive: true,
-                            interaction: { mode: 'index', intersect: false },
-                            plugins: {
-                                legend: { display: true, position: 'top', labels: { usePointStyle: true, padding: 20, font: { size: 13 } } },
-                                tooltip: { mode: 'index', intersect: false }
-                            },
-                            scales: {
-                                x: { title: { display: true, text: 'Itération', font: { size: 13, weight: 'bold' } }, grid: { color: 'rgba(0,0,0,0.05)' } },
-                                y: { title: { display: true, text: 'Débit (m³/s)', font: { size: 13, weight: 'bold' } }, min: 0, grid: { color: 'rgba(0,0,0,0.05)' } }
-                            }
-                        }
-                    });
-                }
-            }
+            await fetchAndRenderChart(Number(iterCountInput.value) || 20);
         } catch (error) {
             statusOutput.textContent = `Erreur de chargement des graphiques: ${error.message}`;
         } finally {
             showGraphButton.disabled = false;
             showGraphButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="inline"><path fill-rule="evenodd" d="M0 0h1v15h15v1H0V0Zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61 4.15-5.073a.5.5 0 0 1 .704-.07Z"/></svg>
-                            Actualiser les graphiques`;
+                            Afficher les graphiques`;
+        }
+    });
+
+    refreshGraphButton.addEventListener("click", async () => {
+        refreshGraphButton.disabled = true;
+        refreshGraphButton.textContent = "Chargement...";
+        
+        try {
+            await fetchAndRenderChart(Number(iterCountInput.value) || 20);
+        } catch (error) {
+            statusOutput.textContent = `Erreur de chargement des graphiques: ${error.message}`;
+        } finally {
+            refreshGraphButton.disabled = false;
+            refreshGraphButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16" class="inline"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 1 1 .908-.418A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>
+                            Actualiser`;
         }
     });
 

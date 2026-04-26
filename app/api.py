@@ -55,15 +55,17 @@ def optimize_turbines(payload: OptimizationPayload) -> dict[str, object]:
 
 import pandas as pd
 import pathlib
+import random
 
 _CACHED_ROWS = None
 
-def _get_qtot_niv_iter() -> list[tuple[float, float]]:
+def _get_all_rows() -> list[tuple[float, float]]:
+    """Load every (qtot, niv_amont) row from the Excel dataset (cached)."""
     global _CACHED_ROWS
     if _CACHED_ROWS is not None:
         return _CACHED_ROWS
         
-    xlsx_path = pathlib.Path(__file__).parent.parent / "DataProjet2026.xlsx"
+    xlsx_path = "./DataProjet2026.xlsx"
     df = pd.read_excel(xlsx_path, header=2, engine='openpyxl')
     df = df.dropna(how='all')
     
@@ -81,23 +83,33 @@ def _get_qtot_niv_iter() -> list[tuple[float, float]]:
             continue
         try:
             res.append((float(qtot), float(niv)))
-            if len(res) == 20:
-                break
         except Exception:
             pass
             
     _CACHED_ROWS = res
     return res
 
+class IterationsPayload(BaseModel):
+    total_flow: float
+    upstream_elevation: float
+    algorithm: str
+    turbines: List[TurbineConstraint]
+    count: int = 20
+
 @app.post("/api/iterations")
-def get_iterations(payload: OptimizationPayload) -> dict[str, object]:
+def get_iterations(payload: IterationsPayload) -> dict[str, object]:
     iterations_data = {f"Turbine {i}": [] for i in range(1, 6)}
     qmax_by_turbine = [t.max_flow if t.available else 0.0 for t in payload.turbines]
     
     try:
-        rows = _get_qtot_niv_iter()
+        all_rows = _get_all_rows()
     except Exception as e:
         return {"status": "error", "message": f"Erreur de lecture du dataset: {str(e)}"}
+
+    n = len(all_rows)
+    count = max(1, min(payload.count, n))  # clamp to dataset size
+    start = random.randint(0, n - count)
+    rows = all_rows[start:start + count]
         
     for qtot_val, niv_val in rows:
         sol = dp_optimizer.optimize(
@@ -110,6 +122,6 @@ def get_iterations(payload: OptimizationPayload) -> dict[str, object]:
             
     return {
         "status": "success",
-        "iterations": list(range(1, len(rows) + 1)),
+        "iterations": list(range(start + 1, start + len(rows) + 1)),
         "data": iterations_data
     }
