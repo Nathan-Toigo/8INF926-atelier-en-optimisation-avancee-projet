@@ -111,7 +111,7 @@ Le cœur du calcul repose sur une programmation dynamique discrétisée avec un 
 
 ## Résultats et modélisation
 
-Les notebooks présents dans `modelisations/` et le rapport `rapportProgDyn.ipynb` servent à documenter la comparaison entre les approches Python et NOMAD, ainsi que les validations réalisées sur un jeu de 100 cas.
+Les notebooks présents dans `modelisations/` sont les dossiers ayant été utilisés pour la rédaction de l'article.
 
 Si vous souhaitez reproduire ou prolonger les expériences, commencez par les notebooks `projet1_partie2_dp_python.ipynb` et `projet2_partie2_nomad_python.ipynb`, puis consultez les fichiers CSV de synthèse pour comparer les résultats.
 
